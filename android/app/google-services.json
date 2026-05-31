@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "82435809574",
+    "project_id": "unesa-sporthub",
+    "storage_bucket": "unesa-sporthub.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:82435809574:android:49f9825c128d28f2f621e7",
+        "android_client_info": {
+          "package_name": "com.example.booking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQxY-5Lmbqjg_t-FiKzznTe6L5aZooJNY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
