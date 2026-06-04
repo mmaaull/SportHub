@@ -16,6 +16,7 @@ class StatusBadge extends StatelessWidget {
     final icon = _getStatusIcon(normalizedStatus);
 
     return Container(
+      constraints: const BoxConstraints(maxWidth: 152),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: badgeSurface,
@@ -28,15 +29,17 @@ class StatusBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: badgeColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: badgeColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: badgeColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],

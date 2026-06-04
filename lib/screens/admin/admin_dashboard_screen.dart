@@ -6,6 +6,7 @@ import '../../providers/booking_provider.dart';
 import '../../providers/facility_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/brand_mark.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../auth/login_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -272,19 +273,7 @@ class _AdminHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.sports_soccer,
-                        color: AppColors.primaryDarkGreen,
-                        size: 26,
-                      ),
-                    ),
+                    const SportHubLogoMark(size: 46),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
@@ -367,41 +356,53 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.12,
-      ),
-      children: [
-        _StatCard(
-          title: 'Fasilitas',
-          value: totalFacilities.toString(),
-          icon: Icons.stadium_outlined,
-          color: AppColors.info,
-        ),
-        _StatCard(
-          title: 'Total Booking',
-          value: totalBooking.toString(),
-          icon: Icons.event_note_outlined,
-          color: AppColors.primaryDarkGreen,
-        ),
-        _StatCard(
-          title: 'Pending',
-          value: pendingBooking.toString(),
-          icon: Icons.schedule_rounded,
-          color: AppColors.warning,
-        ),
-        _StatCard(
-          title: 'Approved',
-          value: approvedBooking.toString(),
-          icon: Icons.check_circle_outline,
-          color: AppColors.success,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 720 ? 4 : 2;
+        final aspectRatio = width >= 720
+            ? 1.55
+            : width < 360
+            ? 0.96
+            : 1.08;
+
+        return GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: aspectRatio,
+          ),
+          children: [
+            _StatCard(
+              title: 'Fasilitas',
+              value: totalFacilities.toString(),
+              icon: Icons.stadium_outlined,
+              color: AppColors.info,
+            ),
+            _StatCard(
+              title: 'Total Booking',
+              value: totalBooking.toString(),
+              icon: Icons.event_note_outlined,
+              color: AppColors.primaryDarkGreen,
+            ),
+            _StatCard(
+              title: 'Pending',
+              value: pendingBooking.toString(),
+              icon: Icons.schedule_rounded,
+              color: AppColors.warning,
+            ),
+            _StatCard(
+              title: 'Approved',
+              value: approvedBooking.toString(),
+              icon: Icons.check_circle_outline,
+              color: AppColors.success,
+            ),
+          ],
+        );
+      },
     );
   }
 }

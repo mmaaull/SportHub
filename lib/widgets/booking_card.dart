@@ -56,26 +56,22 @@ class BookingCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  booking.facilityName,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16.5,
-                                    height: 1.2,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              StatusBadge(status: booking.status),
-                            ],
+                          Text(
+                            booking.facilityName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16.5,
+                              height: 1.2,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: StatusBadge(status: booking.status),
                           ),
                           const SizedBox(height: 10),
                           _InfoRow(
@@ -159,7 +155,10 @@ class BookingCard extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: onEdit,
                             icon: const Icon(Icons.edit_outlined, size: 18),
-                            label: const Text('Edit Booking'),
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('Edit Booking'),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -167,7 +166,10 @@ class BookingCard extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: onCancel,
                             icon: const Icon(Icons.cancel_outlined, size: 18),
-                            label: const Text('Batal'),
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('Batal'),
+                            ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.danger,
                               side: const BorderSide(
@@ -186,7 +188,10 @@ class BookingCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onTap,
                         icon: const Icon(Icons.arrow_forward_rounded),
-                        label: const Text('Lihat Detail'),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Lihat Detail'),
+                        ),
                       ),
                     ),
                 ],

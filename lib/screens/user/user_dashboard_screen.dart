@@ -8,6 +8,7 @@ import '../../providers/booking_provider.dart';
 import '../../providers/facility_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/brand_mark.dart';
 import '../../widgets/booking_card.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/empty_state.dart';
@@ -183,7 +184,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               const NavigationDestination(
                 icon: Icon(Icons.event_note_outlined),
                 selectedIcon: Icon(Icons.event_note),
-                label: 'My Bookings',
+                label: 'Booking',
               ),
               NavigationDestination(
                 icon: _NavIconWithBadge(
@@ -194,12 +195,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   icon: Icons.notifications,
                   count: notificationProvider.unreadCount,
                 ),
-                label: 'Notifications',
+                label: 'Notif',
               ),
               const NavigationDestination(
                 icon: Icon(Icons.person_outline),
                 selectedIcon: Icon(Icons.person),
-                label: 'Profile',
+                label: 'Profil',
               ),
             ],
           );
@@ -906,19 +907,7 @@ class _BrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: const Icon(
-            Icons.sports_soccer,
-            color: AppColors.primaryDarkGreen,
-            size: 25,
-          ),
-        ),
+        const SportHubLogoMark(size: 44),
         const SizedBox(width: 12),
         const Text(
           'UNESA\nSportHub',

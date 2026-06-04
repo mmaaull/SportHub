@@ -390,6 +390,8 @@ class _AdminScheduleHeader extends StatelessWidget {
                 const SizedBox(height: 22),
                 Text(
                   '$totalSchedules Jadwal Aktif',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -572,11 +574,14 @@ class _AdminScheduleCard extends StatelessWidget {
                         letterSpacing: 0,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: StatusBadge(status: booking.status),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              StatusBadge(status: booking.status),
             ],
           ),
           const SizedBox(height: 14),

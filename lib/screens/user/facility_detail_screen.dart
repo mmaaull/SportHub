@@ -40,44 +40,30 @@ class FacilityDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 315,
-            pinned: true,
-            backgroundColor: AppColors.primaryDarkGreen,
-            foregroundColor: Colors.white,
-            surfaceTintColor: Colors.transparent,
-            title: Text(
-              facility.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: heroTag,
-                child: _HeroImage(imageUrl: facility.imageUrl),
-              ),
+          SliverToBoxAdapter(
+            child: _FacilityVisualHeader(
+              heroTag: heroTag,
+              facility: facility,
+              onBack: () => Navigator.maybePop(context),
             ),
           ),
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -34),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 26),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    buildTitleCard(),
-                    const SizedBox(height: 16),
-                    buildInfoCard(),
-                    const SizedBox(height: 16),
-                    buildDescriptionCard(),
-                    const SizedBox(height: 16),
-                    buildFeaturedFacilitiesCard(),
-                    const SizedBox(height: 16),
-                    buildBookingInfoCard(),
-                    const SizedBox(height: 104),
-                  ],
-                ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 26),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  buildTitleCard(),
+                  const SizedBox(height: 16),
+                  buildInfoCard(),
+                  const SizedBox(height: 16),
+                  buildDescriptionCard(),
+                  const SizedBox(height: 16),
+                  buildFeaturedFacilitiesCard(),
+                  const SizedBox(height: 16),
+                  buildBookingInfoCard(),
+                  const SizedBox(height: 104),
+                ],
               ),
             ),
           ),
@@ -94,7 +80,7 @@ class FacilityDetailScreen extends StatelessWidget {
   Widget buildTitleCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: AppColors.headerGradient,
@@ -115,9 +101,11 @@ class FacilityDetailScreen extends StatelessWidget {
         children: [
           Text(
             facility.name,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 23,
+              fontSize: 24,
               height: 1.15,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
@@ -288,6 +276,127 @@ class FacilityDetailScreen extends StatelessWidget {
   }
 }
 
+class _FacilityVisualHeader extends StatelessWidget {
+  final String heroTag;
+  final FacilityModel facility;
+  final VoidCallback onBack;
+
+  const _FacilityVisualHeader({
+    required this.heroTag,
+    required this.facility,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final headerHeight = MediaQuery.sizeOf(context).width < 380 ? 300.0 : 326.0;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(34)),
+      child: SizedBox(
+        height: headerHeight,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: heroTag,
+              child: _HeroImage(imageUrl: facility.imageUrl),
+            ),
+            Positioned(
+              right: -22,
+              bottom: -24,
+              child: Icon(
+                Icons.stadium_outlined,
+                size: 128,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    _HeaderIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Kembali',
+                      onPressed: onBack,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.24),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.sports_soccer,
+                              color: Colors.white,
+                              size: 17,
+                            ),
+                            SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                'UNESA SportHub',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 18,
+              right: 18,
+              bottom: 20,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _GlassBadge(
+                    icon: Icons.sports_soccer_outlined,
+                    text: facility.sportType,
+                  ),
+                  _GlassBadge(
+                    icon: Icons.apartment_outlined,
+                    text: facility.campus,
+                  ),
+                  _GlassBadge(
+                    icon: Icons.access_time_rounded,
+                    text: '${facility.openTime} - ${facility.closeTime}',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HeroImage extends StatelessWidget {
   final String imageUrl;
 
@@ -310,6 +419,32 @@ class _HeroImage extends StatelessWidget {
         ),
         const _ImageScrim(),
       ],
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.24),
+      borderRadius: BorderRadius.circular(16),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        color: Colors.white,
+        tooltip: tooltip,
+      ),
     );
   }
 }
@@ -523,6 +658,7 @@ class _GlassBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 230),
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.14),
@@ -534,13 +670,17 @@ class _GlassBadge extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.white, size: 15),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],
@@ -613,7 +753,10 @@ class _StickyActionBar extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onSchedule,
                 icon: const Icon(Icons.calendar_month_outlined),
-                label: const Text('Lihat Jadwal'),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Lihat Jadwal'),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -621,7 +764,10 @@ class _StickyActionBar extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: canBook ? onBooking : null,
                 icon: const Icon(Icons.event_available_outlined),
-                label: Text(canBook ? 'Ajukan Booking' : 'Tidak Tersedia'),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(canBook ? 'Ajukan Booking' : 'Tidak Tersedia'),
+                ),
               ),
             ),
           ],

@@ -480,6 +480,8 @@ class _ManageBookingsHeader extends StatelessWidget {
                 const SizedBox(height: 22),
                 Text(
                   '$totalBooking Total Booking',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -619,7 +621,10 @@ class _AdminBookingActions extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: isLoading ? null : onReject,
               icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Reject'),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Reject'),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.danger,
                 side: const BorderSide(color: AppColors.danger),
@@ -631,7 +636,10 @@ class _AdminBookingActions extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: isLoading ? null : onApprove,
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Approve'),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Approve'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
@@ -653,6 +661,7 @@ class _MiniCountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 118),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -664,13 +673,17 @@ class _MiniCountPill extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.secondaryGreen, size: 15),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],

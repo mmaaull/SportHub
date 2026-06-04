@@ -474,34 +474,43 @@ class _FacilityFormScreenState extends State<FacilityFormScreen> {
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  controller: openTimeController,
-                  label: 'Jam Buka',
-                  prefixIcon: Icons.access_time,
-                  readOnly: true,
-                  onTap: () => pickTime(openTimeController),
-                  validator: (value) {
-                    return Validators.time(value, 'Jam buka');
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  controller: closeTimeController,
-                  label: 'Jam Tutup',
-                  prefixIcon: Icons.access_time_filled,
-                  readOnly: true,
-                  onTap: () => pickTime(closeTimeController),
-                  validator: (value) {
-                    return Validators.time(value, 'Jam tutup');
-                  },
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final openField = CustomTextField(
+                controller: openTimeController,
+                label: 'Jam Buka',
+                prefixIcon: Icons.access_time,
+                readOnly: true,
+                onTap: () => pickTime(openTimeController),
+                validator: (value) {
+                  return Validators.time(value, 'Jam buka');
+                },
+              );
+              final closeField = CustomTextField(
+                controller: closeTimeController,
+                label: 'Jam Tutup',
+                prefixIcon: Icons.access_time_filled,
+                readOnly: true,
+                onTap: () => pickTime(closeTimeController),
+                validator: (value) {
+                  return Validators.time(value, 'Jam tutup');
+                },
+              );
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  children: [openField, const SizedBox(height: 16), closeField],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: openField),
+                  const SizedBox(width: 12),
+                  Expanded(child: closeField),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(

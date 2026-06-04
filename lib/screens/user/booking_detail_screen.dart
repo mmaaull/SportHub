@@ -168,7 +168,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                   ? null
                                   : editBooking,
                               icon: const Icon(Icons.edit_outlined),
-                              label: const Text('Edit Booking'),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Edit Booking'),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -178,7 +181,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                   ? null
                                   : cancelBooking,
                               icon: const Icon(Icons.cancel_outlined),
-                              label: const Text('Batalkan'),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Batalkan'),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.danger,
                                 side: const BorderSide(
@@ -436,7 +442,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 child: OutlinedButton.icon(
                   onPressed: openReceipt,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('Lihat PDF'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Lihat PDF'),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -444,7 +453,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: shareReceipt,
                   icon: const Icon(Icons.share_outlined),
-                  label: const Text('Bagikan'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Bagikan'),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,

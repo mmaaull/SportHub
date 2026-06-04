@@ -440,7 +440,10 @@ class _AdminBookingDetailScreenState extends State<AdminBookingDetailScreen> {
             child: ElevatedButton.icon(
               onPressed: openReceipt,
               icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Lihat Surat PDF'),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Lihat Surat PDF'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
@@ -744,7 +747,10 @@ class _AdminDetailHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Row(
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -779,7 +785,6 @@ class _AdminDetailHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
                     StatusBadge(status: booking.status),
                   ],
                 ),
@@ -1013,7 +1018,10 @@ class _AdminDecisionPanel extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: isLoading ? null : onReject,
               icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Reject'),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Reject'),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.danger,
                 side: const BorderSide(color: AppColors.danger),
@@ -1025,7 +1033,10 @@ class _AdminDecisionPanel extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: isLoading ? null : onApprove,
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Approve'),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Approve'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,

@@ -96,41 +96,53 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget buildStatGrid(BookingProvider provider) {
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.14,
-      ),
-      children: [
-        _StatCard(
-          title: 'Pending',
-          value: provider.pendingBooking.toString(),
-          icon: Icons.schedule_rounded,
-          color: AppColors.warning,
-        ),
-        _StatCard(
-          title: 'Approved',
-          value: provider.approvedBooking.toString(),
-          icon: Icons.check_circle_outline,
-          color: AppColors.success,
-        ),
-        _StatCard(
-          title: 'Rejected',
-          value: provider.rejectedBooking.toString(),
-          icon: Icons.cancel_outlined,
-          color: AppColors.danger,
-        ),
-        _StatCard(
-          title: 'Cancelled',
-          value: provider.cancelledBooking.toString(),
-          icon: Icons.block,
-          color: AppColors.cancelled,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 720 ? 4 : 2;
+        final aspectRatio = width >= 720
+            ? 1.55
+            : width < 360
+            ? 0.96
+            : 1.08;
+
+        return GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: aspectRatio,
+          ),
+          children: [
+            _StatCard(
+              title: 'Pending',
+              value: provider.pendingBooking.toString(),
+              icon: Icons.schedule_rounded,
+              color: AppColors.warning,
+            ),
+            _StatCard(
+              title: 'Approved',
+              value: provider.approvedBooking.toString(),
+              icon: Icons.check_circle_outline,
+              color: AppColors.success,
+            ),
+            _StatCard(
+              title: 'Rejected',
+              value: provider.rejectedBooking.toString(),
+              icon: Icons.cancel_outlined,
+              color: AppColors.danger,
+            ),
+            _StatCard(
+              title: 'Cancelled',
+              value: provider.cancelledBooking.toString(),
+              icon: Icons.block,
+              color: AppColors.cancelled,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -465,6 +477,8 @@ class _StatisticsHeader extends StatelessWidget {
                 const SizedBox(height: 22),
                 Text(
                   '$totalBooking Total Booking',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,

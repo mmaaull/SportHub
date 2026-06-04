@@ -134,7 +134,10 @@ class FacilityCard extends StatelessWidget {
                             child: OutlinedButton.icon(
                               onPressed: onEdit,
                               icon: const Icon(Icons.edit_outlined, size: 18),
-                              label: const Text('Edit'),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Edit'),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -142,7 +145,10 @@ class FacilityCard extends StatelessWidget {
                             child: OutlinedButton.icon(
                               onPressed: onDelete,
                               icon: const Icon(Icons.delete_outline, size: 18),
-                              label: const Text('Hapus'),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Hapus'),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.danger,
                                 side: const BorderSide(
@@ -162,7 +168,10 @@ class FacilityCard extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: onTap,
                           icon: const Icon(Icons.arrow_forward_rounded),
-                          label: const Text('Lihat Detail'),
+                          label: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Lihat Detail'),
+                          ),
                         ),
                       ),
                     ],

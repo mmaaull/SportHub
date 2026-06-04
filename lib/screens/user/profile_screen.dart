@@ -407,35 +407,49 @@ class _AccountSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryItem(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final items = [
+                _SummaryItem(
                   label: 'Total Booking',
                   value: total.toString(),
                   icon: Icons.event_note_outlined,
                   color: AppColors.info,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _SummaryItem(
+                _SummaryItem(
                   label: 'Approved',
                   value: approved.toString(),
                   icon: Icons.check_circle_outline,
                   color: AppColors.success,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _SummaryItem(
+                _SummaryItem(
                   label: 'Pending',
                   value: pending.toString(),
                   icon: Icons.schedule_rounded,
                   color: AppColors.warning,
                 ),
-              ),
-            ],
+              ];
+
+              if (constraints.maxWidth < 300) {
+                return Column(
+                  children: [
+                    for (var index = 0; index < items.length; index++) ...[
+                      items[index],
+                      if (index != items.length - 1) const SizedBox(height: 10),
+                    ],
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  for (var index = 0; index < items.length; index++) ...[
+                    Expanded(child: items[index]),
+                    if (index != items.length - 1) const SizedBox(width: 10),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),

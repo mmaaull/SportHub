@@ -233,6 +233,7 @@ class _ManageFacilitiesScreenState extends State<ManageFacilitiesScreen> {
       runSpacing: 8,
       children: filters.map((filter) {
         return Container(
+          constraints: const BoxConstraints(maxWidth: 220),
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.card,
@@ -244,13 +245,17 @@ class _ManageFacilitiesScreenState extends State<ManageFacilitiesScreen> {
             children: [
               Icon(filter.icon, size: 15, color: AppColors.secondaryGreen),
               const SizedBox(width: 6),
-              Text(
-                filter.label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+              Flexible(
+                child: Text(
+                  filter.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ],
@@ -476,6 +481,8 @@ class _ManageFacilitiesHeader extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text(
                   '$totalFacilities Fasilitas',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.82),
                     fontSize: 14,

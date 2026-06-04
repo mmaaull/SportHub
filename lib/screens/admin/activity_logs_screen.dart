@@ -168,6 +168,8 @@ class _ActivityLogsHeader extends StatelessWidget {
                 const SizedBox(height: 22),
                 Text(
                   '$totalLogs Aktivitas Admin',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -269,24 +271,21 @@ class _ActivityLogCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _getActionLabel(log.action),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _ActionBadge(color: color, text: _getTargetLabel()),
-                  ],
+                Text(
+                  _getActionLabel(log.action),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ActionBadge(color: color, text: _getTargetLabel()),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -396,6 +395,7 @@ class _ActionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 128),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -403,6 +403,8 @@ class _ActionBadge extends StatelessWidget {
       ),
       child: Text(
         text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: color,
           fontSize: 11,
@@ -423,6 +425,7 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 220),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.background,
@@ -434,13 +437,17 @@ class _MetaPill extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.secondaryGreen, size: 14),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],
@@ -457,6 +464,7 @@ class _LogCountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 110),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -472,13 +480,17 @@ class _LogCountPill extends StatelessWidget {
             size: 15,
           ),
           const SizedBox(width: 6),
-          Text(
-            '$total log',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              '$total log',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],

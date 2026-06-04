@@ -493,34 +493,43 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  controller: startTimeController,
-                  label: 'Jam Mulai *',
-                  prefixIcon: Icons.access_time,
-                  readOnly: true,
-                  onTap: () => pickTime(startTimeController),
-                  validator: (value) {
-                    return Validators.time(value, 'Jam mulai');
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  controller: endTimeController,
-                  label: 'Jam Selesai *',
-                  prefixIcon: Icons.access_time_filled,
-                  readOnly: true,
-                  onTap: () => pickTime(endTimeController),
-                  validator: (value) {
-                    return Validators.time(value, 'Jam selesai');
-                  },
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final startField = CustomTextField(
+                controller: startTimeController,
+                label: 'Jam Mulai *',
+                prefixIcon: Icons.access_time,
+                readOnly: true,
+                onTap: () => pickTime(startTimeController),
+                validator: (value) {
+                  return Validators.time(value, 'Jam mulai');
+                },
+              );
+              final endField = CustomTextField(
+                controller: endTimeController,
+                label: 'Jam Selesai *',
+                prefixIcon: Icons.access_time_filled,
+                readOnly: true,
+                onTap: () => pickTime(endTimeController),
+                validator: (value) {
+                  return Validators.time(value, 'Jam selesai');
+                },
+              );
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  children: [startField, const SizedBox(height: 16), endField],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: startField),
+                  const SizedBox(width: 12),
+                  Expanded(child: endField),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           CustomTextField(
