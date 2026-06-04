@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,11 +17,8 @@ class BookingFormScreen extends StatefulWidget {
   final FacilityModel? facility;
   final BookingModel? booking;
 
-  const BookingFormScreen({
-    super.key,
-    this.facility,
-    this.booking,
-  }) : assert(facility != null || booking != null);
+  const BookingFormScreen({super.key, this.facility, this.booking})
+    : assert(facility != null || booking != null);
 
   @override
   State<BookingFormScreen> createState() => _BookingFormScreenState();
@@ -52,6 +50,10 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   String get campus {
     return widget.facility?.campus ?? widget.booking?.campus ?? '-';
+  }
+
+  String get imageUrl {
+    return widget.facility?.imageUrl ?? '';
   }
 
   @override
@@ -95,6 +97,19 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       initialDate: selectedDate ?? now,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 1),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.primaryDarkGreen,
+              onPrimary: Colors.white,
+              surface: AppColors.card,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedDate == null) return;
@@ -113,6 +128,19 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.primaryDarkGreen,
+              onPrimary: Colors.white,
+              surface: AppColors.card,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedTime == null) return;
@@ -174,9 +202,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       return;
     }
 
-    final participantCount = int.parse(
-      participantCountController.text.trim(),
-    );
+    final participantCount = int.parse(participantCountController.text.trim());
 
     bool success = false;
 
@@ -248,23 +274,56 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: AppColors.card,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          icon: Container(
+            width: 58,
+            height: 58,
+            decoration: const BoxDecoration(
+              color: AppColors.lightGreenSurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isEditMode
+                  ? Icons.check_circle_outline
+                  : Icons.event_available_outlined,
+              color: AppColors.success,
+              size: 34,
+            ),
           ),
           title: Text(
             isEditMode ? 'Booking Diperbarui' : 'Booking Berhasil',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+            ),
           ),
           content: Text(
             isEditMode
                 ? 'Data booking berhasil diperbarui.'
                 : 'Booking berhasil diajukan dan sedang menunggu persetujuan admin.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
           ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('OK'),
+            SizedBox(
+              width: 120,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
             ),
           ],
         );
@@ -274,10 +333,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.danger,
-      ),
+      SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
   }
 
@@ -287,21 +343,37 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(isEditMode ? 'Edit Booking' : 'Form Booking'),
-      ),
       body: Stack(
         alignment: Alignment.topCenter,
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: formKey,
+          Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: Column(
                 children: [
-                  buildFacilityCard(),
-                  const SizedBox(height: 18),
-                  buildFormCard(bookingProvider),
+                  _BookingFormHeader(
+                    title: isEditMode ? 'Edit Booking' : 'Booking Fasilitas',
+                    subtitle: isEditMode
+                        ? 'Perbarui data booking yang masih pending.'
+                        : 'Lengkapi data berikut untuk mengajukan booking.',
+                  ),
+                  Transform.translate(
+                    offset: const Offset(0, -38),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 92),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          buildFacilityCard(),
+                          const SizedBox(height: 16),
+                          buildFormCard(bookingProvider),
+                          const SizedBox(height: 16),
+                          const _PendingInfoBox(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -315,143 +387,452 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: _SubmitBar(
+        isEditMode: isEditMode,
+        isLoading: bookingProvider.isLoading,
+        onPressed: submitBooking,
+      ),
     );
   }
 
   Widget buildFacilityCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDarkGreen.withValues(alpha: 0.07),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            const CircleAvatar(
-              radius: 30,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              child: Icon(
-                Icons.sports_soccer,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    facilityName,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+      child: Row(
+        children: [
+          _FacilityThumb(imageUrl: imageUrl, sportType: sportType),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Fasilitas yang Dipesan',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$sportType • $campus',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  facilityName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 17,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MiniPill(
+                      icon: Icons.sports_soccer_outlined,
+                      text: sportType,
+                    ),
+                    _MiniPill(icon: Icons.location_on_outlined, text: campus),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget buildFormCard(BookingProvider bookingProvider) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            CustomTextField(
-              controller: dateController,
-              label: 'Tanggal Booking',
-              prefixIcon: Icons.calendar_month_outlined,
-              readOnly: true,
-              onTap: pickDate,
-              validator: (value) {
-                return Validators.required(value, 'Tanggal booking');
-              },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Detail Pengajuan',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
             ),
-            const SizedBox(height: 16),
-            Row(
+          ),
+          const SizedBox(height: 18),
+          CustomTextField(
+            controller: dateController,
+            label: 'Tanggal Booking *',
+            prefixIcon: Icons.calendar_month_outlined,
+            readOnly: true,
+            onTap: pickDate,
+            validator: (value) {
+              return Validators.required(value, 'Tanggal booking');
+            },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  controller: startTimeController,
+                  label: 'Jam Mulai *',
+                  prefixIcon: Icons.access_time,
+                  readOnly: true,
+                  onTap: () => pickTime(startTimeController),
+                  validator: (value) {
+                    return Validators.time(value, 'Jam mulai');
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: CustomTextField(
+                  controller: endTimeController,
+                  label: 'Jam Selesai *',
+                  prefixIcon: Icons.access_time_filled,
+                  readOnly: true,
+                  onTap: () => pickTime(endTimeController),
+                  validator: (value) {
+                    return Validators.time(value, 'Jam selesai');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: purposeController,
+            label: 'Tujuan Booking *',
+            hint: 'Contoh: Latihan UKM, pertandingan, kelas olahraga',
+            prefixIcon: Icons.flag_outlined,
+            maxLines: 2,
+            validator: (value) {
+              return Validators.required(value, 'Tujuan booking');
+            },
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: participantCountController,
+            label: 'Jumlah Peserta *',
+            prefixIcon: Icons.groups_outlined,
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              return Validators.number(value, 'Jumlah peserta');
+            },
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: noteController,
+            label: 'Catatan Tambahan',
+            hint: 'Opsional',
+            prefixIcon: Icons.notes_outlined,
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingFormHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _BookingFormHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 70),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -36,
+            bottom: -30,
+            child: Icon(
+              Icons.event_available_outlined,
+              size: 120,
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: CustomTextField(
-                    controller: startTimeController,
-                    label: 'Jam Mulai',
-                    prefixIcon: Icons.access_time,
-                    readOnly: true,
-                    onTap: () => pickTime(startTimeController),
-                    validator: (value) {
-                      return Validators.time(value, 'Jam mulai');
-                    },
+                Row(
+                  children: [
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(16),
+                      child: IconButton(
+                        onPressed: () => Navigator.maybePop(context),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        color: Colors.white,
+                        tooltip: 'Kembali',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: AppColors.primaryDarkGreen,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'UNESA SportHub',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: CustomTextField(
-                    controller: endTimeController,
-                    label: 'Jam Selesai',
-                    prefixIcon: Icons.access_time_filled,
-                    readOnly: true,
-                    onTap: () => pickTime(endTimeController),
-                    validator: (value) {
-                      return Validators.time(value, 'Jam selesai');
-                    },
+                const SizedBox(height: 9),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: 14,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: purposeController,
-              label: 'Tujuan Booking',
-              hint: 'Contoh: Latihan UKM, pertandingan, kelas olahraga',
-              prefixIcon: Icons.flag_outlined,
-              maxLines: 2,
-              validator: (value) {
-                return Validators.required(value, 'Tujuan booking');
-              },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FacilityThumb extends StatelessWidget {
+  final String imageUrl;
+  final String sportType;
+
+  const _FacilityThumb({required this.imageUrl, required this.sportType});
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl.trim().isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: 88,
+          height: 88,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const _ThumbFallback(),
+          errorWidget: (context, url, error) => const _ThumbFallback(),
+        ),
+      );
+    }
+
+    return const _ThumbFallback();
+  }
+}
+
+class _ThumbFallback extends StatelessWidget {
+  const _ThumbFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 88,
+      height: 88,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.headerGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              Icons.stadium_outlined,
+              color: Colors.white.withValues(alpha: 0.16),
+              size: 58,
             ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: participantCountController,
-              label: 'Jumlah Peserta',
-              prefixIcon: Icons.groups_outlined,
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                return Validators.number(value, 'Jumlah peserta');
-              },
+          ),
+          const Center(
+            child: Icon(Icons.sports_soccer, color: Colors.white, size: 38),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniPill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MiniPill({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.lightGreenSurface,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.secondaryGreen),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
             ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: noteController,
-              label: 'Catatan Tambahan',
-              hint: 'Opsional',
-              prefixIcon: Icons.notes_outlined,
-              maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingInfoBox extends StatelessWidget {
+  const _PendingInfoBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.pendingSurface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.22)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 22),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Setiap pengajuan booking akan berstatus Pending terlebih dahulu.',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
             ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: isEditMode ? 'Simpan Perubahan' : 'Ajukan Booking',
-              icon: isEditMode ? Icons.save : Icons.event_available,
-              isLoading: bookingProvider.isLoading,
-              onPressed: submitBooking,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmitBar extends StatelessWidget {
+  final bool isEditMode;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _SubmitBar({
+    required this.isEditMode,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, -6),
             ),
           ],
+        ),
+        child: CustomButton(
+          text: isEditMode ? 'Simpan Perubahan' : 'Ajukan Booking',
+          icon: isEditMode ? Icons.save_outlined : Icons.event_available,
+          isLoading: isLoading,
+          onPressed: onPressed,
         ),
       ),
     );

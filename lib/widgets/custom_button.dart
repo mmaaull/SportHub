@@ -22,21 +22,24 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = backgroundColor ?? AppColors.primary;
+    final buttonColor = backgroundColor ?? AppColors.primaryDarkGreen;
     final textColor = foregroundColor ?? Colors.white;
 
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 54,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonColor,
           foregroundColor: textColor,
-          // ignore: deprecated_member_use
-          disabledBackgroundColor: buttonColor.withOpacity(0.5),
+          disabledBackgroundColor: buttonColor.withValues(alpha: 0.45),
+          disabledForegroundColor: textColor.withValues(alpha: 0.72),
+          elevation: 0,
+          shadowColor: buttonColor.withValues(alpha: 0.18),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
         child: isLoading
@@ -58,8 +61,14 @@ class CustomButton extends StatelessWidget {
                   ],
                   Text(
                     text,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
                     ),
                   ),
                 ],

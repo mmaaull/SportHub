@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +20,8 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       loadLogs();
     });
   }
@@ -37,42 +36,64 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Riwayat Aktivitas Admin'),
-      ),
       body: RefreshIndicator(
+        color: AppColors.primaryDarkGreen,
         onRefresh: loadLogs,
         child: ListView(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.zero,
           children: [
             buildHeader(provider.logs.length),
-            const SizedBox(height: 18),
-            if (provider.isLoading)
-              const Padding(
-                padding: EdgeInsets.only(top: 70),
-                child: LoadingWidget(
-                  message: 'Memuat riwayat aktivitas...',
-                ),
-              )
-            else if (provider.errorMessage != null)
-              EmptyState(
-                icon: Icons.error_outline,
-                title: 'Terjadi Kesalahan',
-                message: provider.errorMessage!,
-                buttonText: 'Coba Lagi',
-                onPressed: loadLogs,
-              )
-            else if (provider.logs.isEmpty)
-              const EmptyState(
-                icon: Icons.history,
-                title: 'Belum Ada Aktivitas',
-                message:
-                    'Riwayat aktivitas admin akan muncul setelah admin melakukan aksi.',
-              )
-            else
-              ...provider.logs.map((log) {
-                return _ActivityLogCard(log: log);
-              }),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Aktivitas Terbaru',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ),
+                      _LogCountPill(total: provider.logs.length),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  if (provider.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 56),
+                      child: LoadingWidget(
+                        message: 'Memuat riwayat aktivitas...',
+                      ),
+                    )
+                  else if (provider.errorMessage != null)
+                    EmptyState(
+                      icon: Icons.error_outline,
+                      title: 'Terjadi Kesalahan',
+                      message: provider.errorMessage!,
+                      buttonText: 'Coba Lagi',
+                      onPressed: loadLogs,
+                    )
+                  else if (provider.logs.isEmpty)
+                    const EmptyState(
+                      icon: Icons.history,
+                      title: 'Belum Ada Aktivitas',
+                      message:
+                          'Riwayat aktivitas admin akan muncul setelah admin melakukan aksi.',
+                    )
+                  else
+                    ...provider.logs.map((log) {
+                      return _ActivityLogCard(log: log);
+                    }),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -80,48 +101,121 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   }
 
   Widget buildHeader(int totalLogs) {
+    return _ActivityLogsHeader(totalLogs: totalLogs);
+  }
+}
+
+class _ActivityLogsHeader extends StatelessWidget {
+  final int totalLogs;
+
+  const _ActivityLogsHeader({required this.totalLogs});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(22),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          const CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.primary,
+          Positioned(
+            right: -28,
+            bottom: -30,
             child: Icon(
-              Icons.history,
-              size: 34,
+              Icons.manage_search_rounded,
+              color: Colors.white.withValues(alpha: 0.08),
+              size: 136,
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Log Aktivitas Sistem',
-                  style: TextStyle(
-                    color: Colors.white70,
-                  ),
+                Row(
+                  children: [
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(16),
+                      child: IconButton(
+                        onPressed: () => Navigator.maybePop(context),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        color: Colors.white,
+                        tooltip: 'Kembali',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Riwayat Aktivitas',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 22),
                 Text(
-                  '$totalLogs Aktivitas',
+                  '$totalLogs Aktivitas Admin',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Mencatat aksi penting yang dilakukan admin.',
+                const SizedBox(height: 8),
+                Text(
+                  'Audit trail untuk aksi penting di UNESA SportHub.',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Colors.white.withValues(alpha: 0.78),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.13),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.verified_user_outlined,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Approve, reject, tambah, edit, dan hapus fasilitas tercatat otomatis.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            height: 1.35,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -136,60 +230,109 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
 class _ActivityLogCard extends StatelessWidget {
   final ActivityLogModel log;
 
-  const _ActivityLogCard({
-    required this.log,
-  });
+  const _ActivityLogCard({required this.log});
 
   @override
   Widget build(BuildContext context) {
     final color = _getActionColor(log.action);
     final icon = _getActionIcon(log.action);
 
-    return Card(
-      elevation: 2,
+    return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDarkGreen.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(14),
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.12),
-          foregroundColor: color,
-          child: Icon(icon),
-        ),
-        title: Text(
-          _getActionLabel(log.action),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(log.description),
-              const SizedBox(height: 8),
-              Text(
-                'Admin: ${log.adminName}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _getActionLabel(log.action),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _ActionBadge(color: color, text: _getTargetLabel()),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormatter.formatDateTime(log.createdAt),
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 12,
+                const SizedBox(height: 8),
+                Text(
+                  log.description,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MetaPill(
+                      icon: Icons.person_outline,
+                      text: log.adminName.isEmpty ? 'Admin' : log.adminName,
+                    ),
+                    _MetaPill(
+                      icon: Icons.schedule_outlined,
+                      text: DateFormatter.formatDateTime(log.createdAt),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  String _getTargetLabel() {
+    if (log.targetType.trim().isEmpty) return 'Sistem';
+
+    switch (log.targetType) {
+      case 'booking':
+        return 'Booking';
+      case 'facility':
+        return 'Fasilitas';
+      default:
+        return log.targetType;
+    }
   }
 
   Color _getActionColor(String action) {
@@ -205,7 +348,7 @@ class _ActivityLogCard extends StatelessWidget {
       case 'delete_facility':
         return AppColors.danger;
       default:
-        return AppColors.primary;
+        return AppColors.primaryDarkGreen;
     }
   }
 
@@ -218,7 +361,7 @@ class _ActivityLogCard extends StatelessWidget {
       case 'add_facility':
         return Icons.add_business;
       case 'update_facility':
-        return Icons.edit;
+        return Icons.edit_outlined;
       case 'delete_facility':
         return Icons.delete_outline;
       default:
@@ -241,5 +384,105 @@ class _ActivityLogCard extends StatelessWidget {
       default:
         return action;
     }
+  }
+}
+
+class _ActionBadge extends StatelessWidget {
+  final Color color;
+  final String text;
+
+  const _ActionBadge({required this.color, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MetaPill({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppColors.secondaryGreen, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogCountPill extends StatelessWidget {
+  final int total;
+
+  const _LogCountPill({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.history_rounded,
+            color: AppColors.secondaryGreen,
+            size: 15,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$total log',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

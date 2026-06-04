@@ -14,10 +14,7 @@ import '../../widgets/status_badge.dart';
 class FacilityScheduleScreen extends StatefulWidget {
   final FacilityModel facility;
 
-  const FacilityScheduleScreen({
-    super.key,
-    required this.facility,
-  });
+  const FacilityScheduleScreen({super.key, required this.facility});
 
   @override
   State<FacilityScheduleScreen> createState() => _FacilityScheduleScreenState();
@@ -31,15 +28,16 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       loadSchedules();
     });
   }
 
   Future<void> loadSchedules() async {
     await context.read<BookingProvider>().loadFacilitySchedules(
-          widget.facility.id,
-        );
+      widget.facility.id,
+    );
   }
 
   List<BookingModel> getEventsForDay(DateTime day) {
@@ -57,70 +55,87 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Jadwal Fasilitas'),
-      ),
       body: RefreshIndicator(
+        color: AppColors.primaryDarkGreen,
         onRefresh: loadSchedules,
         child: ListView(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.zero,
           children: [
-            buildHeader(),
-            const SizedBox(height: 18),
-            if (bookingProvider.isLoading)
-              const Padding(
-                padding: EdgeInsets.only(top: 80),
-                child: LoadingWidget(
-                  message: 'Memuat jadwal fasilitas...',
+            const _ScheduleHeader(),
+            Transform.translate(
+              offset: const Offset(0, -34),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildFacilitySummaryCard(),
+                    const SizedBox(height: 16),
+                    if (bookingProvider.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 70),
+                        child: LoadingWidget(
+                          message: 'Memuat jadwal fasilitas...',
+                        ),
+                      )
+                    else if (bookingProvider.errorMessage != null)
+                      EmptyState(
+                        icon: Icons.error_outline,
+                        title: 'Terjadi Kesalahan',
+                        message: bookingProvider.errorMessage!,
+                        buttonText: 'Coba Lagi',
+                        onPressed: loadSchedules,
+                      )
+                    else ...[
+                      buildCalendar(),
+                      const SizedBox(height: 18),
+                      buildSelectedDateTitle(selectedSchedules.length),
+                      const SizedBox(height: 12),
+                      if (selectedSchedules.isEmpty)
+                        const EmptyState(
+                          icon: Icons.event_available_outlined,
+                          title: 'Tidak Ada Jadwal',
+                          message:
+                              'Belum ada booking pending atau approved pada tanggal ini.',
+                        )
+                      else
+                        ...selectedSchedules.map((booking) {
+                          return _ScheduleCard(booking: booking);
+                        }),
+                    ],
+                  ],
                 ),
-              )
-            else if (bookingProvider.errorMessage != null)
-              EmptyState(
-                icon: Icons.error_outline,
-                title: 'Terjadi Kesalahan',
-                message: bookingProvider.errorMessage!,
-                buttonText: 'Coba Lagi',
-                onPressed: loadSchedules,
-              )
-            else ...[
-              buildCalendar(),
-              const SizedBox(height: 18),
-              buildSelectedDateTitle(selectedSchedules.length),
-              const SizedBox(height: 12),
-              if (selectedSchedules.isEmpty)
-                const EmptyState(
-                  icon: Icons.event_available_outlined,
-                  title: 'Tidak Ada Jadwal',
-                  message:
-                      'Belum ada booking pending atau approved pada tanggal ini.',
-                )
-              else
-                ...selectedSchedules.map((booking) {
-                  return _ScheduleCard(booking: booking);
-                }),
-            ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget buildHeader() {
+  Widget buildFacilitySummaryCard() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(22),
-      ),
+      decoration: _cardDecoration(),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.primary,
-            child: Icon(
-              Icons.calendar_month,
-              size: 34,
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: AppColors.headerGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.stadium_outlined,
+              color: Colors.white,
+              size: 30,
             ),
           ),
           const SizedBox(width: 14),
@@ -128,28 +143,32 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Kalender Jadwal',
-                  style: TextStyle(
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Text(
                   widget.facility.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
-                  widget.facility.campus,
+                  '${widget.facility.sportType} - ${widget.facility.campus}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
+                const SizedBox(height: 10),
+                StatusBadge(status: widget.facility.status),
               ],
             ),
           ),
@@ -159,47 +178,114 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
   }
 
   Widget buildCalendar() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: TableCalendar<BookingModel>(
-          firstDay: DateTime.utc(2024, 1, 1),
-          lastDay: DateTime.utc(2030, 12, 31),
-          focusedDay: focusedDay,
-          selectedDayPredicate: (day) {
-            return isSameDay(selectedDay, day);
-          },
-          eventLoader: getEventsForDay,
-          calendarFormat: CalendarFormat.month,
-          startingDayOfWeek: StartingDayOfWeek.monday,
-          onDaySelected: (selected, focused) {
-            setState(() {
-              selectedDay = selected;
-              focusedDay = focused;
-            });
-          },
-          calendarStyle: const CalendarStyle(
-            selectedDecoration: BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            todayDecoration: BoxDecoration(
-              color: AppColors.warning,
-              shape: BoxShape.circle,
-            ),
-            markerDecoration: BoxDecoration(
-              color: AppColors.danger,
-              shape: BoxShape.circle,
-            ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: _cardDecoration(),
+      child: TableCalendar<BookingModel>(
+        firstDay: DateTime.utc(2024, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: focusedDay,
+        selectedDayPredicate: (day) {
+          return isSameDay(selectedDay, day);
+        },
+        eventLoader: getEventsForDay,
+        calendarFormat: CalendarFormat.month,
+        startingDayOfWeek: StartingDayOfWeek.monday,
+        onDaySelected: (selected, focused) {
+          setState(() {
+            selectedDay = selected;
+            focusedDay = focused;
+          });
+        },
+        calendarStyle: const CalendarStyle(
+          outsideDaysVisible: false,
+          selectedDecoration: BoxDecoration(
+            color: AppColors.primaryDarkGreen,
+            shape: BoxShape.circle,
           ),
-          headerStyle: const HeaderStyle(
-            formatButtonVisible: false,
-            titleCentered: true,
+          todayDecoration: BoxDecoration(
+            color: AppColors.warning,
+            shape: BoxShape.circle,
           ),
+          defaultTextStyle: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+          weekendTextStyle: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+          markerDecoration: BoxDecoration(
+            color: AppColors.accentGreen,
+            shape: BoxShape.circle,
+          ),
+        ),
+        daysOfWeekStyle: const DaysOfWeekStyle(
+          weekdayStyle: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+          weekendStyle: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
+          leftChevronIcon: Icon(
+            Icons.chevron_left_rounded,
+            color: AppColors.primaryDarkGreen,
+          ),
+          rightChevronIcon: Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.primaryDarkGreen,
+          ),
+        ),
+        calendarBuilders: CalendarBuilders<BookingModel>(
+          markerBuilder: (context, day, events) {
+            if (events.isEmpty) return null;
+
+            final hasPending = events.any((booking) => booking.isPending);
+            final markerColor = hasPending
+                ? AppColors.warning
+                : AppColors.accentGreen;
+
+            return Positioned(
+              bottom: 7,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: markerColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  if (events.length > 1) ...[
+                    const SizedBox(width: 3),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: markerColor.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -208,17 +294,44 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
   Widget buildSelectedDateTitle(int total) {
     return Row(
       children: [
-        const Icon(
-          Icons.event_note,
-          color: AppColors.primary,
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.lightGreenSurface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(
+            Icons.event_note_outlined,
+            color: AppColors.secondaryGreen,
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
-            '${DateFormatter.formatDayDate(selectedDay)} ($total jadwal)',
+            'Jadwal pada ${DateFormatter.formatDayDate(selectedDay)}',
             style: const TextStyle(
+              color: AppColors.textPrimary,
               fontSize: 17,
-              fontWeight: FontWeight.bold,
+              height: 1.25,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.lightGreenSurface,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '$total',
+            style: const TextStyle(
+              color: AppColors.primaryDarkGreen,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
             ),
           ),
         ),
@@ -227,63 +340,158 @@ class _FacilityScheduleScreenState extends State<FacilityScheduleScreen> {
   }
 }
 
-class _ScheduleCard extends StatelessWidget {
-  final BookingModel booking;
-
-  const _ScheduleCard({
-    required this.booking,
-  });
+class _ScheduleHeader extends StatelessWidget {
+  const _ScheduleHeader();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 76),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Stack(
+        children: [
+          Positioned(
+            right: -28,
+            bottom: -34,
+            child: Icon(
+              Icons.calendar_month_outlined,
+              color: Colors.white.withValues(alpha: 0.08),
+              size: 132,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Row(
               children: [
-                const CircleAvatar(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  child: Icon(Icons.access_time),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '${booking.startTime} - ${booking.endTime}',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Material(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(16),
+                  child: IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    color: Colors.white,
+                    tooltip: 'Kembali',
                   ),
                 ),
-                StatusBadge(status: booking.status),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Jadwal Fasilitas',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        'Lihat kalender penggunaan fasilitas.',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            _InfoRow(
-              icon: Icons.person_outline,
-              text: '${booking.userName} - ${booking.userNim}',
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.flag_outlined,
-              text: booking.purpose,
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.groups_outlined,
-              text: '${booking.participantCount} peserta',
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduleCard extends StatelessWidget {
+  final BookingModel booking;
+
+  const _ScheduleCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(15),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.lightGreenSurface,
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: const Icon(
+                  Icons.access_time_rounded,
+                  color: AppColors.secondaryGreen,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${booking.startTime} - ${booking.endTime}',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      booking.facilityName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              StatusBadge(status: booking.status),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _InfoRow(
+            icon: Icons.person_outline,
+            text: '${booking.userName} - ${booking.userNim}',
+          ),
+          const SizedBox(height: 8),
+          _InfoRow(icon: Icons.flag_outlined, text: booking.purpose),
+          const SizedBox(height: 8),
+          _InfoRow(
+            icon: Icons.groups_outlined,
+            text: '${booking.participantCount} peserta',
+          ),
+        ],
       ),
     );
   }
@@ -293,25 +501,43 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoRow({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: AppColors.primary,
-          size: 18,
-        ),
+        Icon(icon, color: AppColors.secondaryGreen, size: 18),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              height: 1.3,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
+          ),
         ),
       ],
     );
   }
+}
+
+BoxDecoration _cardDecoration() {
+  return BoxDecoration(
+    color: AppColors.card,
+    borderRadius: BorderRadius.circular(26),
+    border: Border.all(color: AppColors.border),
+    boxShadow: [
+      BoxShadow(
+        color: AppColors.primaryDarkGreen.withValues(alpha: 0.06),
+        blurRadius: 22,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }

@@ -1,21 +1,19 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/facility_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../auth/login_screen.dart';
-import 'manage_facilities_screen.dart';
-import 'manage_bookings_screen.dart';
-import 'statistics_screen.dart';
-import '../../providers/notification_provider.dart';
 import '../notifications/notifications_screen.dart';
 import 'activity_logs_screen.dart';
 import 'admin_schedule_screen.dart';
+import 'manage_bookings_screen.dart';
+import 'manage_facilities_screen.dart';
+import 'statistics_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -29,17 +27,54 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() async {
-      await context.read<FacilityProvider>().seedInitialFacilities();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      await context.read<BookingProvider>().loadStatistics();
 
-      final user = context.read<AuthProvider>().currentUser;
-
-      if (user != null) {
-        await context.read<NotificationProvider>().loadUnreadCount(user.uid);
-      }
+      loadDashboardData();
     });
+  }
+
+  Future<void> loadDashboardData() async {
+    final facilityProvider = context.read<FacilityProvider>();
+    final bookingProvider = context.read<BookingProvider>();
+    final notificationProvider = context.read<NotificationProvider>();
+    final user = context.read<AuthProvider>().currentUser;
+
+    await facilityProvider.seedInitialFacilities();
+    await bookingProvider.loadStatistics();
+
+    if (user != null) {
+      await notificationProvider.loadUnreadCount(user.uid);
+    }
+  }
+
+  Future<void> refreshDashboard() async {
+    final facilityProvider = context.read<FacilityProvider>();
+    final bookingProvider = context.read<BookingProvider>();
+    final notificationProvider = context.read<NotificationProvider>();
+    final user = context.read<AuthProvider>().currentUser;
+
+    await facilityProvider.loadFacilities();
+    await bookingProvider.loadStatistics();
+
+    if (user != null) {
+      await notificationProvider.loadUnreadCount(user.uid);
+    }
+  }
+
+  Future<void> openNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
+
+    if (!mounted) return;
+
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user != null) {
+      await context.read<NotificationProvider>().loadUnreadCount(user.uid);
+    }
   }
 
   Future<void> logout() async {
@@ -52,7 +87,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
 
     if (!confirm) return;
-
     if (!mounted) return;
 
     await context.read<AuthProvider>().logout();
@@ -61,9 +95,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -73,233 +105,303 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final authProvider = context.watch<AuthProvider>();
     final bookingProvider = context.watch<BookingProvider>();
     final facilityProvider = context.watch<FacilityProvider>();
+    final notificationProvider = context.watch<NotificationProvider>();
 
     final user = authProvider.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        actions: [
-          Consumer<NotificationProvider>(
-            builder: (context, notificationProvider, child) {
-              return Stack(
-                children: [
-                  IconButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationsScreen(),
-                        ),
-                      );
-
-                      if (!mounted) return;
-
-                      final user = context.read<AuthProvider>().currentUser;
-
-                      if (user != null) {
-                        await context
-                            .read<NotificationProvider>()
-                            .loadUnreadCount(user.uid);
-                      }
-                    },
-                    icon: const Icon(Icons.notifications_outlined),
-                    tooltip: 'Notifikasi',
-                  ),
-                  if (notificationProvider.unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.danger,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          notificationProvider.unreadCount > 9
-                              ? '9+'
-                              : notificationProvider.unreadCount.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+      backgroundColor: AppColors.background,
+      body: RefreshIndicator(
+        color: AppColors.primaryDarkGreen,
+        onRefresh: refreshDashboard,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _AdminHeader(
+              name: user?.name ?? 'Admin',
+              email: user?.email ?? '-',
+              unreadCount: notificationProvider.unreadCount,
+              onNotifications: openNotifications,
+              onLogout: logout,
+            ),
+            Transform.translate(
+              offset: const Offset(0, -34),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _StatsGrid(
+                      totalFacilities: facilityProvider.facilities.length,
+                      totalBooking: bookingProvider.totalBooking,
+                      pendingBooking: bookingProvider.pendingBooking,
+                      approvedBooking: bookingProvider.approvedBooking,
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'Menu Pengelolaan',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
                       ),
                     ),
-                ],
-              );
-            },
-          ),
-          IconButton(
-            onPressed: logout,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await context.read<FacilityProvider>().loadFacilities();
-          if (!mounted) return;
-          await context.read<BookingProvider>().loadStatistics();
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Panel Pengelola',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
+                    const SizedBox(height: 14),
+                    _AdminMenuCard(
+                      icon: Icons.calendar_month_outlined,
+                      title: 'Kalender Jadwal',
+                      description:
+                          'Lihat jadwal booking fasilitas dalam bentuk kalender.',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminScheduleScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    user?.name ?? 'Admin',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    _AdminMenuCard(
+                      icon: Icons.edit_calendar_outlined,
+                      title: 'CRUD Fasilitas',
+                      description:
+                          'Tambah, edit, dan hapus data fasilitas olahraga UNESA.',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ManageFacilitiesScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    user?.email ?? '-',
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    _AdminMenuCard(
+                      icon: Icons.fact_check_outlined,
+                      title: 'Kelola Booking',
+                      description: 'Lihat, approve, atau reject booking user.',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ManageBookingsScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                ],
+                    _AdminMenuCard(
+                      icon: Icons.bar_chart_rounded,
+                      title: 'Statistik',
+                      description: 'Lihat statistik booking menggunakan chart.',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StatisticsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _AdminMenuCard(
+                      icon: Icons.history_rounded,
+                      title: 'Riwayat Aktivitas',
+                      description: 'Lihat riwayat aktivitas admin.',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ActivityLogsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Ringkasan Sementara',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              children: [
-                _StatCard(
-                  title: 'Fasilitas',
-                  value: facilityProvider.facilities.length.toString(),
-                  icon: Icons.sports_soccer,
-                  color: AppColors.info,
-                ),
-                _StatCard(
-                  title: 'Total Booking',
-                  value: bookingProvider.totalBooking.toString(),
-                  icon: Icons.event_note,
-                  color: AppColors.primary,
-                ),
-                _StatCard(
-                  title: 'Pending',
-                  value: bookingProvider.pendingBooking.toString(),
-                  icon: Icons.schedule,
-                  color: AppColors.pending,
-                ),
-                _StatCard(
-                  title: 'Approved',
-                  value: bookingProvider.approvedBooking.toString(),
-                  icon: Icons.check_circle,
-                  color: AppColors.success,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _AdminMenuCard(
-              icon: Icons.calendar_month,
-              title: 'Kalender Jadwal',
-              description: 'Lihat jadwal booking fasilitas dalam bentuk kalender.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminScheduleScreen(),
-                  ),
-                );
-              },
-            ),
-            _AdminMenuCard(
-              icon: Icons.edit_calendar,
-              title: 'CRUD Fasilitas',
-              description: 'Tambah, edit, dan hapus data fasilitas olahraga UNESA.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ManageFacilitiesScreen(),
-                  ),
-                );
-              },
-            ),
-            _AdminMenuCard(
-              icon: Icons.fact_check_outlined,
-              title: 'Kelola Booking',
-              description: 'Lihat, approve, atau reject booking user.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ManageBookingsScreen(),
-                  ),
-                );
-              },
-            ),
-            _AdminMenuCard(
-              icon: Icons.bar_chart,
-              title: 'Statistik',
-              description: 'Lihat statistik booking menggunakan chart.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const StatisticsScreen(),
-                  ),
-                );
-              },
-            ),
-            _AdminMenuCard(
-              icon: Icons.history,
-              title: 'Riwayat Aktivitas',
-              description: 'Lihat riwayat aktivitas admin.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ActivityLogsScreen(),
-                  ),
-                );
-              },
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AdminHeader extends StatelessWidget {
+  final String name;
+  final String email;
+  final int unreadCount;
+  final VoidCallback onNotifications;
+  final VoidCallback onLogout;
+
+  const _AdminHeader({
+    required this.name,
+    required this.email,
+    required this.unreadCount,
+    required this.onNotifications,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 78),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30,
+            bottom: -34,
+            child: Icon(
+              Icons.admin_panel_settings_outlined,
+              color: Colors.white.withValues(alpha: 0.08),
+              size: 138,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: AppColors.primaryDarkGreen,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'UNESA SportHub',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                    _NotificationButton(
+                      unreadCount: unreadCount,
+                      onPressed: onNotifications,
+                    ),
+                    const SizedBox(width: 10),
+                    _HeaderIconButton(
+                      icon: Icons.logout_rounded,
+                      tooltip: 'Logout',
+                      onPressed: onLogout,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Panel Pengelola',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.78),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsGrid extends StatelessWidget {
+  final int totalFacilities;
+  final int totalBooking;
+  final int pendingBooking;
+  final int approvedBooking;
+
+  const _StatsGrid({
+    required this.totalFacilities,
+    required this.totalBooking,
+    required this.pendingBooking,
+    required this.approvedBooking,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.12,
+      ),
+      children: [
+        _StatCard(
+          title: 'Fasilitas',
+          value: totalFacilities.toString(),
+          icon: Icons.stadium_outlined,
+          color: AppColors.info,
+        ),
+        _StatCard(
+          title: 'Total Booking',
+          value: totalBooking.toString(),
+          icon: Icons.event_note_outlined,
+          color: AppColors.primaryDarkGreen,
+        ),
+        _StatCard(
+          title: 'Pending',
+          value: pendingBooking.toString(),
+          icon: Icons.schedule_rounded,
+          color: AppColors.warning,
+        ),
+        _StatCard(
+          title: 'Approved',
+          value: approvedBooking.toString(),
+          icon: Icons.check_circle_outline,
+          color: AppColors.success,
+        ),
+      ],
     );
   }
 }
@@ -319,41 +421,57 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      color: color.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDarkGreen.withValues(alpha: 0.06),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
               color: color,
-              size: 32,
+              fontSize: 27,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
             ),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -374,26 +492,152 @@ class _AdminMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDarkGreen.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.12),
-          foregroundColor: AppColors.primary,
-          child: Icon(icon),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightGreenSurface,
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: Icon(icon, color: AppColors.secondaryGreen, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.5,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
           ),
         ),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_right),
+      ),
+    );
+  }
+}
+
+class _NotificationButton extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onPressed;
+
+  const _NotificationButton({
+    required this.unreadCount,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _HeaderIconButton(
+          icon: Icons.notifications_outlined,
+          tooltip: 'Notifikasi',
+          onPressed: onPressed,
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: -1,
+            top: -1,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: const BoxDecoration(
+                color: AppColors.danger,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  unreadCount > 9 ? '9+' : unreadCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(16),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        color: Colors.white,
+        tooltip: tooltip,
       ),
     );
   }
